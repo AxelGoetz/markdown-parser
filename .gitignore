@@ -1,4 +1,4 @@
-jspm_packages/*/*
+public/jspm_packages/
 jspm
 build.js
 build.js.map
