@@ -79,7 +79,7 @@ function bold(match) {
   return {
     type: 'BOLD',
     text: match[2],
-    tag: 'string'
+    tag: 'strong'
   };
 }
 
@@ -121,9 +121,9 @@ function unorderedList(match) {
 function alink(match) {
   return {
     type: 'LINK',
-    href: match[2],
-    title: match[4],
-    text: match[1],
+    href: match[2] || '',
+    title: match[4] || '',
+    text: match[1] || '',
     tag: 'a'
   };
 }
@@ -131,8 +131,9 @@ function alink(match) {
 function alink1(match) {
   return {
     type: 'LINK',
-    href: match[1],
-    text: match[1],
+    href: match[1] || '',
+    text: match[1] || '',
+    title: ''
     tag: 'a'
   };
 }
@@ -140,9 +141,9 @@ function alink1(match) {
 function img(match) {
   return {
     type: 'IMG',
-    href: match[2],
-    title: match[4],
-    text: match[1],
+    href: match[2] || '',
+    title: match[4] || '',
+    text: match[1] || '',
     tag: 'img'
   };
 }
@@ -165,7 +166,7 @@ function blockquote(match) {
 function multilineCode(match) {
   return {
     type: 'MULTILINECODE',
-    language: match[1],
+    language: match[1] || '',
     text: match[2]
   };
 }

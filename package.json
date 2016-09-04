@@ -4,6 +4,7 @@
       "baseURL": "public"
     },
     "dependencies": {
+      "highlightjs": "github:components/highlightjs@^9.6.0",
       "jquery": "npm:jquery@^3.1.0",
       "lodash": "npm:lodash@^4.15.0"
     },
