@@ -56,40 +56,45 @@ function header(match) {
   return {
     type: 'HEADER',
     level: match[1].length,
-    text: match[2]
+    text: match[2],
  };
 }
 
 function horizontalRule(match) {
   return {
-    type: 'HORIZONTALRULE'
+    type: 'HORIZONTALRULE',
+    tag: 'hr'
   };
 }
 
 function italics(match) {
   return {
     type: 'ITALICS',
-    text: match[2]
+    text: match[2],
+    tag: 'em'
   };
 }
 
 function bold(match) {
   return {
     type: 'BOLD',
-    text: match[2]
+    text: match[2],
+    tag: 'string'
   };
 }
 
 function strikethrough(match) {
   return {
     type: 'STRIKETHROUGH',
-    text: match[2]
+    text: match[2],
+    tag: 'del'
   };
 }
 
 function linebreak(match) {
   return {
-    type: 'LINEBREAK'
+    type: 'LINEBREAK',
+    tag: 'br'
   };
 }
 
@@ -98,7 +103,8 @@ function orderedList(match) {
     type: 'ORDEREDLISTITEM',
     level: match[1].length,
     text: match[2],
-    tokens: lexer(match[2], tableRules)
+    tokens: lexer(match[2], tableRules),
+    tag: 'li'
   };
 }
 
@@ -107,7 +113,8 @@ function unorderedList(match) {
     type: 'UNORDEREDLISTITEM',
     level: match[1].length,
     text: match[2],
-    tokens: lexer(match[2], tableRules)
+    tokens: lexer(match[2], tableRules),
+    tag: 'li'
   };
 }
 
@@ -116,7 +123,8 @@ function alink(match) {
     type: 'LINK',
     href: match[2],
     title: match[4],
-    text: match[1]
+    text: match[1],
+    tag: 'a'
   };
 }
 
@@ -124,7 +132,8 @@ function alink1(match) {
   return {
     type: 'LINK',
     href: match[1],
-    text: match[1]
+    text: match[1],
+    tag: 'a'
   };
 }
 
@@ -133,14 +142,16 @@ function img(match) {
     type: 'IMG',
     href: match[2],
     title: match[4],
-    text: match[1]
+    text: match[1],
+    tag: 'img'
   };
 }
 
 function code(match) {
   return {
     type: 'CODE',
-    text: match[1]
+    text: match[1],
+    tag: 'code'
   };
 }
 
@@ -200,7 +211,8 @@ function table(match) {
   return {
     type: 'TABLEROW',
     columns: newColumns,
-    original: match[0]
+    original: match[0],
+    tag: 'tr'
   };
 }
 
@@ -213,7 +225,8 @@ function paragraph(match) {
 
 function singleNewLine(match) {
   return {
-    type: 'SINGLENEWLINE'
+    type: 'SINGLENEWLINE',
+    tag: 'br'
   };
 }
 

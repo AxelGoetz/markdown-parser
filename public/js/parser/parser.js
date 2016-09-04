@@ -64,7 +64,8 @@ function replaceNode(AST, node, newNode) {
 function createParagraph(currentNode, token) {
   return  {
     type: 'PARAGRAPH',
-    children: [token]
+    children: [token],
+    tag: 'p'
   };
 }
 
@@ -135,7 +136,8 @@ function createNewList(currentNode, token) {
   let list = {
     type: type,
     level: token.level,
-    children: [token]
+    children: [token],
+    tag: token.type == 'ORDEREDLISTITEM'? 'ol' : 'ul'
   };
   currentNode.children.push(list);
   return list;
@@ -207,7 +209,8 @@ function addTable(AST, currentNode, token) {
       type: 'TABLE',
       columnLength: token.columns.length,
       children: [token],
-      underTable: false
+      underTable: false,
+      tag: 'table'
     };
     currentNode.children.push(table);
     currentNode = table;
