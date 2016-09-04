@@ -61,6 +61,13 @@ function replaceNode(AST, node, newNode) {
   return AST;
 }
 
+function createParagraph(currentNode, token) {
+  return  {
+    type: 'PARAGRAPH',
+    children: [token]
+  };
+}
+
 /**
  * Adds a partparagraph to the AST by either starting
  * a new parapgraph or appending to the current one
@@ -71,11 +78,13 @@ function replaceNode(AST, node, newNode) {
 function addParagraph(currentNode, token) {
   if(currentNode.type == 'PARAGRAPH') {
     currentNode.children.push(token);
+  } else if(currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') { // Paragraph within list
+    currentNode = currentNode.children[currentNode.children.length - 1]; // Last list item will contain paragraph
+    let paragraph = createParagraph(currentNode, token);
+    currentNode.children.push(paragraph);
+    currentNode = paragraph;
   } else {
-    let paragraph = {
-      type: 'PARAGRAPH',
-      children: [token]
-    };
+    let paragraph = createParagraph(currentNode, token);
     currentNode.children.push(paragraph);
     currentNode = paragraph;
   }
@@ -92,8 +101,12 @@ function addParagraph(currentNode, token) {
  * @return {Dict} currentNode
  */
 function addSingleNewLine(AST, currentNode, token) {
-  if(currentNode.type == 'PARAGRAPH' || currentNode.type == 'TABLE') {
+  if(currentNode.type == 'PARAGRAPH' || currentNode.type == 'TABLE' || currentNode.type == 'ORDEREDLISTITEM' || currentNode.type == 'UNORDEREDLISTITEM') {
     currentNode = findParentNode(AST, currentNode); // Stop paragraph or table
+    // If it is a paragraph within a list, the list should become the current node
+    if(currentNode.type == 'ORDEREDLISTITEM' || currentNode.type == 'UNORDEREDLISTITEM') {
+      currentNode = addSingleNewLine(AST, currentNode, token);
+    }
   } else {
     currentNode.children.push(token);
   }
@@ -101,8 +114,12 @@ function addSingleNewLine(AST, currentNode, token) {
 }
 
 function addLineBreak(AST, currentNode, token) {
-  if(currentNode.type == 'PARAGRAPH' || currentNode.type == 'TABLE' || currentNode.type == 'LIST') {
+  if(currentNode.type == 'PARAGRAPH' || currentNode.type == 'TABLE' || currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') {
     currentNode = findParentNode(AST, currentNode); // Stop paragraph, table or list
+    // For nested lists, you should escape all the way
+    if(currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') {
+      currentNode = addLineBreak(AST, currentNode, token);
+    }
   } else {
     currentNode.children.push(token);
   }
@@ -222,6 +239,37 @@ function addUnderTable(AST, currentNode, token) {
 }
 
 /**
+ * Add all the other tokens to the AST and considers things
+ * like when they are inside of a list. Or if they make the beginning
+ * of a paragraph
+ * You do not have to worry about the following case:
+ * 1. Hello *I am Axel* because italics/bold/.. in lists and tables
+ * are taken care of seperately.
+ */
+function addSingleLineOthers(AST, currentNode, token) {
+  // In for example the case: '*Hello* I am axel\n'
+  if(currentNode.type != 'PARAGRAPH') {
+    currentNode = addParagraph(currentNode, token); // Already takes care of lists
+  } else {
+    currentNode.children.push(token);
+  }
+  return currentNode;
+}
+
+/**
+ * Considers things like when these items are nested within a list
+ */
+function addMultiLineOthers(AST, currentNode, token) {
+  if(currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') { // within a list
+    currentNode = currentNode.children[currentNode.children.length - 1]; // Last item in the list
+    currentNode.children.push(token);
+  } else {
+    currentNode.children.push(token);
+  }
+  return currentNode;
+}
+
+/**
  * Takes a line (or lines if a newline is added) and a subsection of the parse tree
  * and returns a new tree. Thhis 'subtree' is then replaced in the main tree
  * @param  {Array} tokens [Array of tokens]
@@ -236,8 +284,10 @@ export function parse(tokens, AST) {
     let token = tokens[i];
     token.children = token.children || [];
 
-    if(token.type.match(/HEADER|HORIZONTALRULE|ITALICS|BOLD|STRIKETHROUGH|LINK|IMG|CODE|BLOCKQUOTE|MULTILINECODE|SINGLECHAR/)) {
-      currentNode.children.push(token);
+    if(token.type.match(/ITALICS|BOLD|STRIKETHROUGH|LINK|IMG|CODE|SINGLECHAR/)) {
+      currentNode = addSingleLineOthers(AST, currentNode, token);
+    } else if(token.type.match(/HEADER|HORIZONTALRULE|BLOCKQUOTE|MULTILINECODE/)) {
+      currentNode = addMultiLineOthers(AST, currentNode, token);
     } else if(token.type == 'PARTPARAGRAPH') {
       currentNode = addParagraph(currentNode, token);
     } else if(token.type == 'SINGLENEWLINE') {

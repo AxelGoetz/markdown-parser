@@ -97,7 +97,8 @@ function orderedList(match) {
   return {
     type: 'ORDEREDLISTITEM',
     level: match[1].length,
-    text: match[2]
+    text: match[2],
+    tokens: lexer(match[2], tableRules)
   };
 }
 
@@ -105,7 +106,8 @@ function unorderedList(match) {
   return {
     type: 'UNORDEREDLISTITEM',
     level: match[1].length,
-    text: match[2]
+    text: match[2],
+    tokens: lexer(match[2], tableRules)
   };
 }
 
@@ -261,9 +263,9 @@ export function constructRules() {
   rules.push({regex: /((?:^(?:\s*:?-+\s*))(?:\|(?:\s*:?-+:?\s*)+)+)(?:\n|$)/, action: underTable});
   rules.push({regex: /((?:^\|)(?:[^|\n]+\|)+)(?:\n|$)/, action: table});
   rules.push({regex: /((?:^[^\|\n]+)(?:\|[^|\n]+)+)(?:\n|$)/, action: table});
+  rules.push({regex: /[^*_\~`\[<!|\n]+/, action: paragraph});
   rules.push({regex: /\n/, action: singleNewLine});
   rules.push({regex: /\'|\"|\*|~|`|\[|!/, action: singleChar});
-  rules.push({regex: /[^'"*_\~`\[<!|\n]+/, action: paragraph});
 
   return rules;
 }
