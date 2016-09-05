@@ -274,7 +274,7 @@ export function constructRules() {
   rules.push({regex: /!\[([^\[\]]*)\](?:\(([^\(\)'"]*)(?:\s+("|')([^\3]*)\3)?\s*\))/, action: img});
   rules.push({regex: /`([^`\n]+)`/, action: code});
   rules.push({regex: /(?:^>)\s+([^\n$]*)(?:\n|$)/, action: blockquote});
-  rules.push({regex: /(?:^```)([a-z]*)\s*\n([^`]+(?:(?:`[^`]+)|(?:``[^`]+))*)\n```/, action: multilineCode});
+  rules.push({regex: /(?:^```)([a-z]*)\s*\n([^`]+(?:(?:`[^`]+)|(?:``[^`]+))*`?)\n```/, action: multilineCode});
   rules.push({regex: /(?:(?:^\|)(?:\s*:?-+:?\s*\|)+)(?:\n|$)/, action: underTable});
   rules.push({regex: /((?:^(?:\s*:?-+\s*))(?:\|(?:\s*:?-+:?\s*)+)+)(?:\n|$)/, action: underTable});
   rules.push({regex: /((?:^\|)(?:[^|\n]+\|)+)(?:\n|$)/, action: table});

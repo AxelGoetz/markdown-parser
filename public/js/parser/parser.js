@@ -141,6 +141,21 @@ function createNewList(currentNode, token) {
 }
 
 /**
+ * Checks if the list returns at the correct level
+ */
+function checkIfLevelIsCorrect(AST, currentNode, token) {
+  if(currentNode.level > token.level) { // Append to parent list if exists
+    let parentNode = findParentNode(AST, currentNode);
+    if(parentNode.type == 'ORDEREDLISTITEM' || parentNode.type == 'UNORDEREDLISTITEM') {
+      currentNode = findParentNode(AST, parentNode);
+    }
+  } else {
+    return currentNode;
+  }
+  return checkIfLevelIsCorrect(AST, currentNode, token);
+}
+
+/**
  * Checks if the level of the current list and the
  * token are the same. If they aren't they either create
  * a new list or append to a parent list
@@ -153,6 +168,7 @@ function checkListLevel(AST, currentNode, token) {
     if(parentNode.type == 'ORDEREDLISTITEM' || parentNode.type == 'UNORDEREDLISTITEM') {
       currentNode = findParentNode(AST, parentNode);
     }
+    currentNode = checkIfLevelIsCorrect(AST, currentNode, token);
     currentNode.children.push(token); // Else you just append to the current list
   } else { // Append to current list
     currentNode.children.push(token);
@@ -166,6 +182,10 @@ function checkListLevel(AST, currentNode, token) {
  */
 function addListItem(AST, currentNode, token) {
   currentNode = checkIfNotTable(AST, currentNode);
+  currentNode = checkIfNotParagraph(AST, currentNode);
+  if(currentNode.type == 'ORDEREDLISTITEM' || currentNode.type == 'UNORDEREDLISTITEM') {
+    currentNode = findParentNode(AST, currentNode);
+  }
   if(currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') {
     currentNode = checkListLevel(AST, currentNode, token);
   } else {
@@ -180,6 +200,13 @@ function addListItem(AST, currentNode, token) {
  */
 function checkIfNotTable(AST, currentNode) {
   if(currentNode.type == 'NOTTABLE') {
+    return findParentNode(AST, currentNode);
+  }
+  return currentNode;
+}
+
+function checkIfNotParagraph(AST, currentNode) {
+  if(currentNode.type == 'PARAGRAPH') {
     return findParentNode(AST, currentNode);
   }
   return currentNode;
@@ -200,6 +227,7 @@ function createNewTable(columnLength, children) {
  * existing table
  */
 function addTable(AST, currentNode, tokens, i) {
+  currentNode = checkIfNotParagraph(AST, currentNode);
   let token = tokens[i];
   // If there is a table or not a table, just add the node
   // The reason we include nottable is because it will be easier
@@ -271,6 +299,7 @@ function addSingleLineOthers(AST, currentNode, token) {
  */
 function addMultiLineOthers(AST, currentNode, token) {
   currentNode = checkIfNotTable(AST, currentNode);
+  currentNode = checkIfNotParagraph(AST, currentNode);
   if(currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') { // within a list
     currentNode = currentNode.children[currentNode.children.length - 1]; // Last item in the list
     currentNode.children.push(token);
@@ -315,5 +344,6 @@ export function parse(tokens, AST) {
       currentNode = addUnderTable(AST, currentNode, token);
     }
   }
+
   return AST;
 }

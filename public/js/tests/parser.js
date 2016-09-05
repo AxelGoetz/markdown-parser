@@ -78,12 +78,10 @@ function parse3() {
     children[0].children[0].type == 'PARTPARAGRAPH' &&
     children[0].children[1].type == 'BOLD' &&
     children[1].type == 'ORDEREDLIST' &&
-    children[1].children.length == 4 &&
+    children[1].children.length == 3 &&
     children[1].children[0].type == 'ORDEREDLISTITEM' &&
     children[1].children[1].type == 'ORDEREDLISTITEM' &&
-    children[1].children[2].type == 'ORDEREDLIST' &&
-    children[1].children[2].children.length == 2 &&
-    children[1].children[3].type == 'ORDEREDLISTITEM' &&
+    children[1].children[2].type == 'ORDEREDLISTITEM' &&
     children[2].type == 'PARAGRAPH';
 
   if(check) {
@@ -99,7 +97,6 @@ function parse4() {
   let AST = lexAndParse(md);
   let children = AST.children;
   let check = children[0].type == 'PARAGRAPH' &&
-    children[0].children.length == 2 &&
     children[0].children[0].type == 'PARTPARAGRAPH' &&
     children[0].children[1].type == 'BOLD' &&
     children[1].type == 'ORDEREDLIST' &&
@@ -107,11 +104,6 @@ function parse4() {
     children[1].children[0].type == 'ORDEREDLISTITEM' &&
     children[1].children[1].type == 'ORDEREDLISTITEM' &&
     children[1].children[2].type == 'ORDEREDLISTITEM' &&
-    children[1].children[2].children[0].type == 'HEADER' &&
-    children[1].children[2].children[1].type == 'PARAGRAPH' &&
-    children[1].children[2].children[2].type == 'PARAGRAPH'  &&
-    children[1].children[2].children.length == 3 &&
-    children[1].children[3].type == 'ORDEREDLISTITEM' &&
     children[2].type == 'PARAGRAPH';
 
   if(check) {

@@ -36,7 +36,6 @@ export function runLexerTests() {
   results.push(undertable2());
   results.push(table1());
   results.push(table2());
-  results.push(bigTest1());
 
   if(results.filter(x => !x).length === 0) {
     console.log('Passed all ' + results.length + ' lexer tests');
@@ -371,9 +370,9 @@ function undertable1() {
   let result = lexer(md, rules);
   if(result.length == 1 && result[0].type == 'UNDERTABLE' &&
     result[0].alignment.length == 3 &&
-    result[0].alignment[0] == 'LEFT' &&
-    result[0].alignment[1] == 'CENTER' &&
-    result[0].alignment[2] == 'RIGHT') {
+    result[0].alignment[0] == 'left' &&
+    result[0].alignment[1] == 'center' &&
+    result[0].alignment[2] == 'right') {
     return true;
   } else {
     console.log('FAILED UNDER TABLE 1');
@@ -385,12 +384,12 @@ function undertable2() {
   let md = '|------|:---:|----------:|';
   let result = lexer(md, rules);
   if(result.length == 1 && result[0].alignment.length == 3 &&
-    result[0].alignment[0] == 'LEFT' &&
-    result[0].alignment[1] == 'CENTER' &&
-    result[0].alignment[2] == 'RIGHT') {
+    result[0].alignment[0] == 'left' &&
+    result[0].alignment[1] == 'center' &&
+    result[0].alignment[2] == 'right') {
     return true;
   } else {
-    console.log('FAILED UNDER TABLE 1');
+    console.log('FAILED UNDER TABLE 2');
     return false;
   }
 }
@@ -419,23 +418,6 @@ function table2() {
     return true;
   } else {
     console.log('FAILED TABLE 2');
-    return false;
-  }
-}
-
-function bigTest1() {
-  let md = '# Header 1\nThis is a small bit of markdown to test if *everything* goes according to __plan__\nIf you are interested in more, click [here](http:google.com)\n\n## Header 2\nWhat am I doing?';
-  let result = lexer(md, rules);
-
-  let a = result.length == 11;
-  let b = result[0].type == 'HEADER' && result[1].type == 'PARTPARAGRAPH' && result[2].type == 'ITALICS' &&
-    result[3].type == 'PARTPARAGRAPH' && result[4].type == 'BOLD' && result[5].type == 'SINGLENEWLINE' && result[6].type == 'PARTPARAGRAPH' &&
-    result[7].type == 'LINK' && result[8].type == 'LINEBREAK' && result[9].type == 'HEADER'  && result[10].type == 'PARTPARAGRAPH';
-
-  if(a && b) {
-    return true;
-  } else {
-    console.log('FAILED BIG LEXER TEST 1');
     return false;
   }
 }
