@@ -36,7 +36,7 @@ function generateListItem(node) {
   for(let i = 0; i < node.tokens.length; i++) {
     let token = node.tokens[i];
     if(token.type == 'TABLETEXT') {
-      text += escapeHTML(token.text);
+      text += token.text;
     } else {
       text += generateHTML(token);
     }
@@ -60,7 +60,7 @@ function generateParagraph(node) {
   for(let i = 0; i < node.children.length; i++) {
     let child = node.children[i];
     if(child.type == 'PARTPARAGRAPH') {
-      text += escapeHTML(child.text);
+      text += child.text;
     } else {
       text += generateHTML(child);
     }
@@ -108,7 +108,7 @@ function generateNotTable(node) {
   for(let k = 0; k < node.children.length; k++) {
     let child = node.children[k];
     if(child.type == 'UNDERTABLE') {
-      text += escapeHTML(child.original);
+      text += child.original;
       continue;
     }
     for(let i = 0; i < child.columns.length; i++) {
@@ -116,7 +116,7 @@ function generateNotTable(node) {
       for(let j = 0; j < column.tokens.length; j++) {
         let token = column.tokens[j];
         if(token.type == 'TABLETEXT') {
-          text += escapeHTML(token.text);
+          text += token.text;
         } else {
           text += generateHTML(token);
         }
@@ -143,7 +143,7 @@ function getTableRow(columns, alignment, tag) {
     for(let j = 0; j < column.tokens.length; j++) {
       let token = column.tokens[j];
       if(token.type == 'TABLETEXT') {
-        text += escapeHTML(token.text);
+        text += token.text;
       } else {
         text += generateHTML(token);
       }
@@ -172,7 +172,7 @@ function generateBlockquote(node) {
   for(let i = 0; i < node.tokens.length; i++) {
     let token = node.tokens[i];
     if(token.type == 'TABLETEXT') {
-      text += escapeHTML(token.text);
+      text += token.text;
     } else {
       text += generateHTML(token);
     }
