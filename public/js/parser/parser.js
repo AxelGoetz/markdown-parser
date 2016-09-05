@@ -1,4 +1,6 @@
+import { findParentNode } from '../utils/utils.js';
 import _ from 'lodash';
+
 /**
  * The AST maintains a very similar structure to the tokens,
  * instead 1 key is added: 'children', which is an array of tokens that
@@ -26,23 +28,6 @@ import _ from 'lodash';
  * ]}
  */
 
-/**
- * Finds the parent node of the currentNode
- * @param  {Dict} AST         [Part of the AST that still needs to be examined]
- * @param  {Dict} currentNode [Looks for parent of this node]
- * @return {Dict} AST         [Parent node]
- */
-function findParentNode(AST, currentNode) {
-  for(let i = 0; i < AST.children.length; i++) {
-    let child = AST.children[i];
-    if(child == currentNode) {
-      return AST;
-    }
-    let childSearch = findParentNode(child, currentNode);
-    if(childSearch !== null) return childSearch;
-  }
-  return null;
-}
 
 /**
  * Removes an element from the children of an AST
@@ -76,7 +61,8 @@ function createParagraph(currentNode, token) {
  * @param  {Dict} token       [Token that is being added]
  * @return {Dict} currentNode
  */
-function addParagraph(currentNode, token) {
+function addParagraph(AST, currentNode, token) {
+  currentNode = checkIfNotTable(AST, currentNode);
   if(currentNode.type == 'PARAGRAPH') {
     currentNode.children.push(token);
   } else if(currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') { // Paragraph within list
@@ -102,24 +88,31 @@ function addParagraph(currentNode, token) {
  * @return {Dict} currentNode
  */
 function addSingleNewLine(AST, currentNode, token) {
-  if(currentNode.type == 'PARAGRAPH' || currentNode.type == 'TABLE' || currentNode.type == 'ORDEREDLISTITEM' || currentNode.type == 'UNORDEREDLISTITEM') {
-    currentNode = findParentNode(AST, currentNode); // Stop paragraph or table
-    // If it is a paragraph within a list, the list should become the current node
-    if(currentNode.type == 'ORDEREDLISTITEM' || currentNode.type == 'UNORDEREDLISTITEM') {
-      currentNode = addSingleNewLine(AST, currentNode, token);
-    }
-  } else {
-    currentNode.children.push(token);
+  currentNode = checkIfNotTable(AST, currentNode);
+  let parentNode = findParentNode(AST, currentNode);
+  if(currentNode.type == 'TABLE' ||
+  currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST' ||
+  currentNode.type == 'ORDEREDLISTITEM' || currentNode.type == 'UNORDEREDLISTITEM') {
+    currentNode = parentNode; // Stop table or listitem
+  } else if(currentNode.type == 'PARAGRAPH' &&
+    (parentNode.type == 'ORDEREDLISTITEM' || parentNode.type == 'UNORDEREDLISTITEM')) {
+      currentNode = parentNode;
   }
   return currentNode;
 }
 
 function addLineBreak(AST, currentNode, token) {
-  if(currentNode.type == 'PARAGRAPH' || currentNode.type == 'TABLE' || currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') {
+  currentNode = checkIfNotTable(AST, currentNode);
+  if(currentNode.type == 'PARAGRAPH' || currentNode.type == 'TABLE' || currentNode.type == 'NOTTABLE' ||
+    currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST' ||
+    currentNode.type == 'ORDEREDLISTITEM' || currentNode.type == 'UNORDEREDLISTITEM') {
     currentNode = findParentNode(AST, currentNode); // Stop paragraph, table or list
     // For nested lists, you should escape all the way
-    if(currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') {
+    if(currentNode.type == 'ORDEREDLISTITEM' || currentNode.type == 'UNORDEREDLISTITEM') {
       currentNode = addLineBreak(AST, currentNode, token);
+    } else if(currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') {
+      currentNode = findParentNode(AST, currentNode, token);
+      currentNode.children.push(token);
     }
   } else {
     currentNode.children.push(token);
@@ -131,6 +124,10 @@ function addLineBreak(AST, currentNode, token) {
  * Creates a new list node
  */
 function createNewList(currentNode, token) {
+  // Should be the child of the last list item
+  if(currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') {
+    currentNode = currentNode.children[currentNode.children.length - 1];
+  }
   let type;
   token.type == 'ORDEREDLISTITEM'? type = 'ORDEREDLIST': type = 'UNORDEREDLIST';
   let list = {
@@ -153,8 +150,8 @@ function checkListLevel(AST, currentNode, token) {
     currentNode = createNewList(currentNode, token);
   } else if(currentNode.level > token.level) { // Append to parent list if exists
     let parentNode = findParentNode(AST, currentNode);
-    if(parentNode.type == 'ORDEREDLIST' || parentNode.type == 'UNORDEREDLIST') {
-      currentNode = parentNode;
+    if(parentNode.type == 'ORDEREDLISTITEM' || parentNode.type == 'UNORDEREDLISTITEM') {
+      currentNode = findParentNode(AST, parentNode);
     }
     currentNode.children.push(token); // Else you just append to the current list
   } else { // Append to current list
@@ -168,6 +165,7 @@ function checkListLevel(AST, currentNode, token) {
  * or appends the item to an existing list
  */
 function addListItem(AST, currentNode, token) {
+  currentNode = checkIfNotTable(AST, currentNode);
   if(currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') {
     currentNode = checkListLevel(AST, currentNode, token);
   } else {
@@ -177,18 +175,23 @@ function addListItem(AST, currentNode, token) {
 }
 
 /**
- * If the currentNode is a TABLE but either the length
- * of the columns do not match or if there is no undertable,
- * the table element needs to be removed and they need to be turned into a NOTTABLE
+ * Checks if the currentNode is a NOTTABLE, if it is
+ * it returns the parentnode, otherwise the currentnode
  */
-function notATable(AST, currentNode, token) {
-  parent = findParentNode(AST, currentNode);
-  let notTable = {
-    type: 'NOTTABLE',
-    children: _.flatten([currentNode.children, token])
+function checkIfNotTable(AST, currentNode) {
+  if(currentNode.type == 'NOTTABLE') {
+    return findParentNode(AST, currentNode);
+  }
+  return currentNode;
+}
+
+function createNewTable(columnLength, children) {
+  return {
+    type: 'TABLE',
+    columnLength: columnLength,
+    children: children,
+    tag: 'table'
   };
-  parent = replaceNode(parent, currentNode, notTable);
-  return notTable;
 }
 
 /**
@@ -196,40 +199,43 @@ function notATable(AST, currentNode, token) {
  * But it might also have to check if it is being appended to an
  * existing table
  */
-function addTable(AST, currentNode, token) {
-  if(currentNode.type == 'TABLE') {
-    // Check if it has the same amount of columns and an undertable
-    if(currentNode.columnLength == token.columns.length && currentNode.underTable) {
-      currentNode.children.push(token);
+function addTable(AST, currentNode, tokens, i) {
+  let token = tokens[i];
+  // If there is a table or not a table, just add the node
+  // The reason we include nottable is because it will be easier
+  // to parse if a nottable becomes a table
+  if(currentNode.type == 'TABLE' || currentNode.type == 'NOTTABLE') {
+    currentNode.children.push(token);
+  } else {
+    let undertable = tokens[i + 1];
+    let firstRow = tokens[i + 2];
+    if((tokens.length > (i + 1)) && undertable.type == 'UNDERTABLE' && undertable.alignment.length == token.columns.length &&
+      firstRow.type == 'TABLEROW' && firstRow.columns.length == token.columns.length) {
+      let table = createNewTable(token.columns.length, [token, undertable, firstRow]);
+      undertable.children = undertable.children || [];
+      firstRow.children = firstRow.children || [];
+      currentNode.children.push(table);
+      currentNode = table;
+      i += 2;
     } else {
-      currentNode = notATable(AST, currentNode, token);
+      let notTable = {
+        type: 'NOTTABLE',
+        children: [token]
+      };
+      currentNode.children.push(notTable);
+      currentNode = notTable;
     }
-  } else { // Create a new table
-    let table = {
-      type: 'TABLE',
-      columnLength: token.columns.length,
-      children: [token],
-      underTable: false,
-      tag: 'table'
-    };
-    currentNode.children.push(table);
-    currentNode = table;
   }
-  return currentNode;
+
+  return {currentNode, i};
 }
 
 /**
- * Checks if the currentNode is a table token and if it has
- * the correct amount of columns.
+ * Returns NOTTABLE since there is no header
  */
 function addUnderTable(AST, currentNode, token) {
-  if(currentNode.type == 'TABLE') {
-    if(!currentNode.underTable && currentNode.columnLength == token.alignment.length) {
-    currentNode.underTable = true;
+  if(currentNode.type == 'NOTTABLE') {
     currentNode.children.push(token);
-    } else {
-      currentNode = notATable(AST, currentNode, token);
-    }
   } else {
     let notTable = {
       type: 'NOTTABLE',
@@ -250,9 +256,10 @@ function addUnderTable(AST, currentNode, token) {
  * are taken care of seperately.
  */
 function addSingleLineOthers(AST, currentNode, token) {
+  currentNode = checkIfNotTable(AST, currentNode);
   // In for example the case: '*Hello* I am axel\n'
   if(currentNode.type != 'PARAGRAPH') {
-    currentNode = addParagraph(currentNode, token); // Already takes care of lists
+    currentNode = addParagraph(AST, currentNode, token); // Already takes care of lists
   } else {
     currentNode.children.push(token);
   }
@@ -263,6 +270,7 @@ function addSingleLineOthers(AST, currentNode, token) {
  * Considers things like when these items are nested within a list
  */
 function addMultiLineOthers(AST, currentNode, token) {
+  currentNode = checkIfNotTable(AST, currentNode);
   if(currentNode.type == 'ORDEREDLIST' || currentNode.type == 'UNORDEREDLIST') { // within a list
     currentNode = currentNode.children[currentNode.children.length - 1]; // Last item in the list
     currentNode.children.push(token);
@@ -287,12 +295,12 @@ export function parse(tokens, AST) {
     let token = tokens[i];
     token.children = token.children || [];
 
-    if(token.type.match(/ITALICS|BOLD|STRIKETHROUGH|LINK|IMG|CODE|SINGLECHAR/)) {
+    if(token.type.match(/^(ITALICS|BOLD|STRIKETHROUGH|LINK|IMG|CODE|SINGLECHAR)/)) {
       currentNode = addSingleLineOthers(AST, currentNode, token);
-    } else if(token.type.match(/HEADER|HORIZONTALRULE|BLOCKQUOTE|MULTILINECODE/)) {
+    } else if(token.type.match(/^(HEADER|HORIZONTALRULE|BLOCKQUOTE|MULTILINECODE)/)) {
       currentNode = addMultiLineOthers(AST, currentNode, token);
     } else if(token.type == 'PARTPARAGRAPH') {
-      currentNode = addParagraph(currentNode, token);
+      currentNode = addParagraph(AST, currentNode, token);
     } else if(token.type == 'SINGLENEWLINE') {
       currentNode = addSingleNewLine(AST, currentNode, token);
     } else if(token.type == 'LINEBREAK') {
@@ -300,7 +308,9 @@ export function parse(tokens, AST) {
     } else if(token.type == 'ORDEREDLISTITEM' || token.type == 'UNORDEREDLISTITEM') {
       currentNode = addListItem(AST, currentNode, token);
     } else if(token.type == 'TABLEROW') {
-      currentNode = addTable(AST, currentNode, token);
+      let value = addTable(AST, currentNode, tokens, i);
+      currentNode = value.currentNode;
+      i = value.i;
     } else if(token.type == 'UNDERTABLE') {
       currentNode = addUnderTable(AST, currentNode, token);
     }

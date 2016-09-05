@@ -121,9 +121,9 @@ function unorderedList(match) {
 function alink(match) {
   return {
     type: 'LINK',
-    href: match[2] || '',
-    title: match[4] || '',
-    text: match[1] || '',
+    href: match[2],
+    title: match[4],
+    text: match[1],
     tag: 'a'
   };
 }
@@ -131,9 +131,9 @@ function alink(match) {
 function alink1(match) {
   return {
     type: 'LINK',
-    href: match[1] || '',
-    text: match[1] || '',
-    title: ''
+    href: match[1],
+    text: match[0],
+    title: '',
     tag: 'a'
   };
 }
@@ -141,9 +141,9 @@ function alink1(match) {
 function img(match) {
   return {
     type: 'IMG',
-    href: match[2] || '',
-    title: match[4] || '',
-    text: match[1] || '',
+    href: match[2],
+    title: match[4],
+    text: match[1],
     tag: 'img'
   };
 }
@@ -159,7 +159,8 @@ function code(match) {
 function blockquote(match) {
   return {
     type: 'BLOCKQUOTE',
-    text: match[1]
+    text: match[1],
+    tokens: lexer(match[1], tableRules),
   };
 }
 
@@ -173,6 +174,7 @@ function multilineCode(match) {
 
 function underTable(match) {
   let columns = match[0].replace(/ /g,'').split('|');
+  for(let i = 0; i < columns.length; i++) columns[i] = columns[i].trim();
   columns = columns.filter((x) => x !== '');
   let alignment = [];
 
@@ -180,11 +182,11 @@ function underTable(match) {
     let column = columns[i];
     let lastLetterColon = column[column.length - 1] == ':';
     if(column[0] == ':') {
-      lastLetterColon ? alignment.push('CENTER') : alignment.push('LEFT');
+      lastLetterColon ? alignment.push('center') : alignment.push('LEFT');
     } else if(lastLetterColon) {
-      alignment.push('RIGHT');
+      alignment.push('right');
     } else {
-      alignment.push('LEFT');
+      alignment.push('left');
     }
   }
 
@@ -272,14 +274,14 @@ export function constructRules() {
   rules.push({regex: /!\[([^\[\]]*)\](?:\(([^\(\)'"]*)(?:\s+("|')([^\3]*)\3)?\s*\))/, action: img});
   rules.push({regex: /`([^`\n]+)`/, action: code});
   rules.push({regex: /(?:^>)\s+([^\n$]*)(?:\n|$)/, action: blockquote});
-  rules.push({regex: /(?:^```)([a-z]*)\s*\n([^]*)\n```/, action: multilineCode});
+  rules.push({regex: /(?:^```)([a-z]*)\s*\n([^`]+(?:(?:`[^`]+)|(?:``[^`]+))*)\n```/, action: multilineCode});
   rules.push({regex: /(?:(?:^\|)(?:\s*:?-+:?\s*\|)+)(?:\n|$)/, action: underTable});
   rules.push({regex: /((?:^(?:\s*:?-+\s*))(?:\|(?:\s*:?-+:?\s*)+)+)(?:\n|$)/, action: underTable});
   rules.push({regex: /((?:^\|)(?:[^|\n]+\|)+)(?:\n|$)/, action: table});
   rules.push({regex: /((?:^[^\|\n]+)(?:\|[^|\n]+)+)(?:\n|$)/, action: table});
-  rules.push({regex: /[^*_\~`\[<!|\n]+/, action: paragraph});
+  rules.push({regex: /[^*_~`\[<!|\nhw]+/, action: paragraph});
   rules.push({regex: /\n/, action: singleNewLine});
-  rules.push({regex: /\'|\"|\*|~|`|\[|!/, action: singleChar});
+  rules.push({regex: /\'|\"|\*|~|`|\[|!|\(|\||_|<|h|w/, action: singleChar});
 
   return rules;
 }
@@ -297,7 +299,7 @@ function constructTableRules() {
   rules.push({regex: /!\[([^\[\]]*)\](?:\(([^\(\)'"]*)(?:\s+("|')([^\3]*)\3)?\s*\))/, action: img});
   rules.push({regex: /`([^`\n]+)`/, action: code});
   rules.push({regex: /\'|\"|\*|~|`|\[|!/, action: singleChar});
-  rules.push({regex: /[^*_~`\[\(<>!]+/, action: tableText});
+  rules.push({regex: /[^*_~`\[<!]+/, action: tableText});
 
   return rules;
 }
