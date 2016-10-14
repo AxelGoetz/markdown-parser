@@ -26,6 +26,7 @@ import _ from 'lodash';
  *
  * So the only composite tokens that we seem to have are `~~` and `\d\.`
  * Therefore it is a better idea to use `composite tokens`:
+ * I know these are technically not tokens but it makes it easier in the parsing phase
  * - /(?:(^#{1,6})|\n(#{1,6}))\s+([^\n$]*)(?:\n|$)/    [Header <h>]           {Either [1].length or [2].length - 1 is the heading level and [3] is the text - Do not use in ```}
  * - /\n(-|=|_|\*)\1\1+(?:\n|$)/                       [Horizontal rule <hr>]
  * - /(\*|_)([^\1]*)\1/                                [Italics <em>]         {[2] is the text}
@@ -182,7 +183,7 @@ function underTable(match) {
     let column = columns[i];
     let lastLetterColon = column[column.length - 1] == ':';
     if(column[0] == ':') {
-      lastLetterColon ? alignment.push('center') : alignment.push('LEFT');
+      lastLetterColon ? alignment.push('center') : alignment.push('left');
     } else if(lastLetterColon) {
       alignment.push('right');
     } else {
