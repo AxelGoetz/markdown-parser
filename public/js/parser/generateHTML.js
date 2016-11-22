@@ -196,6 +196,7 @@ function generateChildren(children) {
 
 function generateHead() {
   let text = getOpenCloseTag('* {box-sizing: border-box;} ol, ul {padding-left: 20px} td, th {border: 1px solid #dddddd;text-align: left;padding: 8px;} table {border-collapse: collapse;width:100%;display:block;} blockquote {color: rgb(119, 119, 119);padding: 0px 1em;border-left: 0.25em solid rgb(221, 221, 221);margin:5;} p {margin-top:10px;margin-bottom:10px;} h1, h2, h3, h4, h5, h6 {margin-top:12px;margin-bottom:12px;}', 'style');
+  // TODO: Get local stylesheet
   text += '<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/default.min.css">';
   return getOpenCloseTag(text, 'head');
 }

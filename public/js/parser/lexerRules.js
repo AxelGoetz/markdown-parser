@@ -53,127 +53,141 @@ import _ from 'lodash';
  * - /[^'"#*_\-=~`\d.+\[\(<>!|]+/                      [Paragraph <p>]
  */
 
-function header(match) {
+function header(match, line) {
   return {
     type: 'HEADER',
     level: match[1].length,
     text: match[2],
+    line: line
  };
 }
 
-function horizontalRule(match) {
+function horizontalRule(match, line) {
   return {
     type: 'HORIZONTALRULE',
-    tag: 'hr'
+    tag: 'hr',
+    line: line
   };
 }
 
-function italics(match) {
+function italics(match, line) {
   return {
     type: 'ITALICS',
     text: match[2],
-    tag: 'em'
+    tag: 'em',
+    line: line
   };
 }
 
-function bold(match) {
+function bold(match, line) {
   return {
     type: 'BOLD',
     text: match[2],
-    tag: 'strong'
+    tag: 'strong',
+    line: line
   };
 }
 
-function strikethrough(match) {
+function strikethrough(match, line) {
   return {
     type: 'STRIKETHROUGH',
     text: match[2],
-    tag: 'del'
+    tag: 'del',
+    line: line
   };
 }
 
-function linebreak(match) {
+function linebreak(match, line) {
   return {
     type: 'LINEBREAK',
-    tag: 'br'
+    tag: 'br',
+    line: line
   };
 }
 
-function orderedList(match) {
+function orderedList(match, line) {
   return {
     type: 'ORDEREDLISTITEM',
     level: match[1].length,
     text: match[2],
     tokens: lexer(match[2], tableRules),
-    tag: 'li'
+    tag: 'li',
+    line: line
   };
 }
 
-function unorderedList(match) {
+function unorderedList(match, line) {
   return {
     type: 'UNORDEREDLISTITEM',
     level: match[1].length,
     text: match[2],
     tokens: lexer(match[2], tableRules),
-    tag: 'li'
+    tag: 'li',
+    line: line
   };
 }
 
-function alink(match) {
+function alink(match, line) {
   return {
     type: 'LINK',
     href: match[2],
     title: match[4],
     text: match[1],
-    tag: 'a'
+    tag: 'a',
+    line: line
   };
 }
 
-function alink1(match) {
+function alink1(match, line) {
   return {
     type: 'LINK',
     href: match[1],
     text: match[0],
     title: '',
-    tag: 'a'
+    tag: 'a',
+    line: line
   };
 }
 
-function img(match) {
+function img(match, line) {
   return {
     type: 'IMG',
     href: match[2],
     title: match[4],
     text: match[1],
-    tag: 'img'
+    tag: 'img',
+    line: line
   };
 }
 
-function code(match) {
+function code(match, line) {
   return {
     type: 'CODE',
     text: match[1],
-    tag: 'code'
+    tag: 'code',
+    line: line
   };
 }
 
-function blockquote(match) {
+function blockquote(match, line) {
   return {
     type: 'BLOCKQUOTE',
     text: match[1],
     tokens: lexer(match[1], tableRules),
+    line: line
   };
 }
 
-function multilineCode(match) {
+function multilineCode(match, line) {
   return {
     type: 'MULTILINECODE',
     language: match[1] || '',
-    text: match[2]
+    text: match[2],
+    line: line
   };
 }
 
-function underTable(match) {
+function underTable(match, line) {
   let columns = match[0].replace(/ /g,'').split('|');
   for(let i = 0; i < columns.length; i++) columns[i] = columns[i].trim();
   columns = columns.filter((x) => x !== '');
@@ -194,11 +208,12 @@ function underTable(match) {
   return {
     type: 'UNDERTABLE',
     alignment: alignment,
-    original: match[0]
+    original: match[0],
+    line: line
   };
 }
 
-function table(match) {
+function table(match, line) {
   let columns = match[1].split('|');
   for(let i = 0; i < columns.length; i++) columns[i] = columns[i].trim();
   columns = columns.filter((x) => x !== '');
@@ -216,35 +231,40 @@ function table(match) {
     type: 'TABLEROW',
     columns: newColumns,
     original: match[0],
-    tag: 'tr'
+    tag: 'tr',
+    line: line
   };
 }
 
-function paragraph(match) {
+function paragraph(match, line) {
   return {
     type: 'PARTPARAGRAPH',
-    text: match[0]
+    text: match[0],
+    line: line
   };
 }
 
-function singleNewLine(match) {
+function singleNewLine(match, line) {
   return {
     type: 'SINGLENEWLINE',
-    tag: 'br'
+    tag: 'br',
+    line: line
   };
 }
 
-function singleChar(match) {
+function singleChar(match, line) {
   return {
     type: 'SINGLECHAR',
-    text: match[0]
+    text: match[0],
+    line: line
   };
 }
 
-function tableText(match) {
+function tableText(match, line) {
   return {
     type: 'TABLETEXT',
-    text: match[0]
+    text: match[0],
+    line: line
   };
 }
 

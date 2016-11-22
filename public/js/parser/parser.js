@@ -9,6 +9,7 @@ import _ from 'lodash';
  * For instance the following text: '# Hello\nI am *Axel*\n'
  * {type: 'MAIN',
  * children: [{
+ *  line: 1,
  *  type: 'HEADER',
  *  level: 1,
  *  text: 'Hello',
@@ -17,10 +18,12 @@ import _ from 'lodash';
  *  type: 'PARAGRAPH',
  *  children: [{
  *    type: 'PARTPARAGRAPH',
+ *    line: 2,
  *    text: 'I am ',
  *    children: []
  *  }, {
  *    type: 'ITALICS',
+ *    line: 2,
  *    text: 'Axel',
  *    children: []
  *   }

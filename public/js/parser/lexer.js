@@ -1,17 +1,23 @@
 import _ from 'lodash';
 
+// Stores the linenumber globally
+var lineNumber = 0;
+
 // TODO: Copy input to save original
-// TODO: Add line numbers to tokens (consider multiple lines) since
-//       this might make the parsing process a lot easier. Instead
-//       of having the parse the entire text every time, you look
-//       for the line number of the parent token and parse only that
-//       line upto and including the line where the change has been made
+
+/**
+ * Add line numbers to tokens since this might make the parsing process
+ * a lot easier. Instead of having the parse the entire text every time,
+ * you look for the line number of the parent token and parse only that
+ * line upto and including the line where the change has been made
+ */
 
 /**
  * Analyzes the input and returns a ordered array of tokens
  * which are in the format:
  * { type: String,
- *   value: String }
+ *   value: String,
+ *   line: Int }
  * @param  {String} input [String to be tokenized]
  * @return {Array} tokens [Array of tokens]
  */
@@ -52,6 +58,7 @@ function scan(input, rules) {
   return findBestMatch(input, matches);
 }
 
+
 /**
  * Out of a dictionary of matches, if those matches are of the same length,
  * it prefers the first one or otherwise the longest one.
@@ -62,8 +69,25 @@ function scan(input, rules) {
 function findBestMatch(input, matches) {
   let bestMatch = _.maxBy(matches, (x) => x.match[0].length);
   input = input.replace(bestMatch.match[0], ''); // Get rid of input
+  let oldLineNumber = updateLineNumber(bestMatch.match[0]);
   return {
     input: input,
-    token: bestMatch.action(bestMatch.match)
+    token: bestMatch.action(bestMatch.match, oldLineNumber),
   };
+}
+
+
+/**
+ * Updates the current line number
+ * @param  {String} input [The input string that matched the token]
+ * @return {Int}          [The old line number]
+ */
+function updateLineNumber(input) {
+  let oldLineNumber = lineNumber;
+
+  let matches = input.match(/\n/g);
+
+  lineNumber += matches === null ? 0 : matches.length;
+
+  return oldLineNumber;
 }
